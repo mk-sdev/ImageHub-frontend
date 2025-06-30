@@ -1,12 +1,70 @@
 import { Image } from 'expo-image'
 import { Platform, StyleSheet, TextInput } from 'react-native'
 
-import { HelloWave } from '@/components/HelloWave'
 import ParallaxScrollView from '@/components/ParallaxScrollView'
 import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
+import { useState } from 'react'
+import { Alert, Button } from 'react-native'
 
 export default function HomeScreen() {
+  const [loginEmail, setLoginEmail] = useState('')
+  const [loginPassword, setLoginPassword] = useState('')
+  const [registerEmail, setRegisterEmail] = useState('')
+  const [registerPassword, setRegisterPassword] = useState('')
+
+  const API_URL =
+    Platform.OS === 'web' ? 'http://localhost:3000' : 'http://192.168.1.30:3000'
+
+  const handleLogin = async () => {
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: loginEmail, password: loginPassword }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        Alert.alert('Login failed', data.message || 'Unknown error')
+        return
+      }
+
+      Alert.alert('Success', 'Logged in!')
+      console.log('Access token:', data.access_token)
+    } catch (error) {
+      console.error(error)
+      Alert.alert('Error', 'Something went wrong.')
+    }
+  }
+
+  const handleRegister = async () => {
+    try {
+      const response = await fetch(`${API_URL}/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: registerEmail,
+          password: registerPassword,
+        }),
+      })
+
+      const data = await response.json()
+      if (!response.ok) {
+        console.log('first')
+        Alert.alert('Registration failed', data.message || 'Unknown error')
+        return
+      }
+
+      Alert.alert('Success', 'Registered successfully!')
+    } catch (error) {
+      console.error(error)
+      Alert.alert('Error', 'Something went wrong.')
+    }
+  }
+
   return (
     <ParallaxScrollView
       headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
@@ -23,13 +81,18 @@ export default function HomeScreen() {
         autoComplete="email"
         style={styles.input}
         placeholderTextColor="gray"
+        onChangeText={setLoginEmail}
+        value={loginEmail}
       ></TextInput>
       <TextInput
         secureTextEntry={true}
         placeholder="enter password"
         style={styles.input}
         placeholderTextColor="gray"
+        onChangeText={setLoginPassword}
+        value={loginPassword}
       ></TextInput>
+      <Button title="Login" onPress={handleLogin} />
 
       <ThemedView
         style={{
@@ -51,13 +114,18 @@ export default function HomeScreen() {
         autoComplete="email"
         style={styles.input}
         placeholderTextColor="gray"
+        onChangeText={setRegisterEmail}
+        value={registerEmail}
       ></TextInput>
       <TextInput
         secureTextEntry={true}
         placeholder="enter password"
         style={styles.input}
         placeholderTextColor="gray"
+        onChangeText={setRegisterPassword}
+        value={registerPassword}
       ></TextInput>
+      <Button title="Register" onPress={handleRegister} />
     </ParallaxScrollView>
   )
 }
@@ -67,7 +135,7 @@ const styles = StyleSheet.create({
     color: 'ivory',
     borderWidth: 1,
     borderColor: 'dimgray',
-    paddingLeft: 10
+    paddingLeft: 10,
   },
   reactLogo: {
     height: 178,
