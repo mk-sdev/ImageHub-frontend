@@ -7,19 +7,19 @@ import { useEffect, useState } from 'react'
 import axios from 'axios'
 
 export default function TabOneScreen() {
-  const { signOut, session } = useSession()
+  const { signOut, access_token} = useSession()
   const [userInfo, setUserInfo] = useState<unknown>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    if (!session) return
+    if (!access_token) return
 
     setLoading(true)
     axios
       .get('http://localhost:3000/userinfo', {
         headers: {
-          Authorization: `Bearer ${session}`,
+          Authorization: `Bearer ${access_token}`,
           'Content-Type': 'application/json',
         },
       })
@@ -32,7 +32,7 @@ export default function TabOneScreen() {
         setUserInfo(null)
       })
       .finally(() => setLoading(false))
-  }, [session])
+  }, [access_token])
 
   return (
     <View style={styles.container}>
@@ -41,12 +41,12 @@ export default function TabOneScreen() {
       {error && <Text style={{ color: 'red' }}>Error: {error}</Text>}
       {userInfo ? (
         <>
-          <Text>Welcome, {userInfo.name || userInfo.email || session}</Text>
+          <Text>Welcome, {userInfo.name || userInfo.email || access_token}</Text>
           <Text>Email: {userInfo.email}</Text>
           <Text numberOfLines={5}>JWT: {userInfo.tokenReceived}</Text>
         </>
       ) : (
-        !loading && <Text>Welcome, {session}</Text>
+        !loading && <Text>Welcome, {access_token}</Text>
       )}
       <View
         style={styles.separator}
