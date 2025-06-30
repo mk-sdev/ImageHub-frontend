@@ -1,43 +1,51 @@
-// app/_layout
-import { useColorScheme } from '@/hooks/useColorScheme'
-import {
-  DarkTheme,
-  DefaultTheme,
-  ThemeProvider,
-} from '@react-navigation/native'
-import { Stack } from 'expo-router'
-import { SessionProvider, useSession } from '@/ctx'
-import { SplashScreenController } from '../splash'
+import FontAwesome from "@expo/vector-icons/FontAwesome";
+import { useFonts } from "expo-font";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect } from "react";
+import { SessionProvider } from "./ctx";
 
-export default function Root() {
-  const colorScheme = useColorScheme()
+export {
+  // Catch any errors thrown by the Layout component.
+  ErrorBoundary,
+} from "expo-router";
 
-  // Set up the auth context and render our layout inside of it.
-  return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <SessionProvider>
-        <SplashScreenController />
-        <RootNavigator />
-      </SessionProvider>
-    </ThemeProvider>
-  )
+export const unstable_settings = {
+  // Ensure that reloading on `/modal` keeps a back button present.
+  initialRouteName: "login",
+};
+
+// Prevent the splash screen from auto-hiding before asset loading is complete.
+SplashScreen.preventAutoHideAsync();
+
+export default function RootLayout() {
+  const [loaded, error] = useFonts({
+    SpaceMono: require("../assets/fonts/SpaceMono-Regular.ttf"),
+    ...FontAwesome.font,
+  });
+
+  // Expo Router uses Error Boundaries to catch errors in the navigation tree.
+  useEffect(() => {
+    if (error) throw error;
+  }, [error]);
+
+  useEffect(() => {
+    if (loaded) {
+      SplashScreen.hideAsync();
+    }
+  }, [loaded]);
+
+  if (!loaded) {
+    return null;
+  }
+
+  return <RootLayoutNav />;
 }
+import { Slot } from "expo-router";
 
-// Separate this into a new component so it can access the SessionProvider context later
-/* Keep the code the same above, just edit the RootNavigator */
-
-function RootNavigator() {
-  const { session } = useSession()
-
+function RootLayoutNav() {
   return (
-    <Stack>
-      <Stack.Protected guard={session}>
-        <Stack.Screen name="(app)" />
-      </Stack.Protected>
-
-      <Stack.Protected guard={!session}>
-        <Stack.Screen name="sign-in" />
-      </Stack.Protected>
-    </Stack>
-  )
+    <SessionProvider>
+      <Slot />
+    </SessionProvider>
+  );
 }
