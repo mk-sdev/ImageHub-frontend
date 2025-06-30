@@ -16,13 +16,36 @@ function useAsyncState<T>(
   ) as UseStateHook<T>
 }
 
+// Funkcja do parsowania payload JWT i pobrania exp
+function getJwtExpiry(token: string): number | null {
+  try {
+    const base64Payload = token.split('.')[1]
+    const payloadJson = atob(base64Payload)
+    const payload = JSON.parse(payloadJson)
+    return payload.exp ?? null
+  } catch {
+    return null
+  }
+}
+
 export async function setStorageItemAsync(key: string, value: string | null) {
   if (Platform.OS === 'web') {
     try {
       if (value === null) {
-        localStorage.removeItem(key)
+        // Usuń cookie
+        document.cookie = `${key}=; Max-Age=0; path=/;`
       } else {
-        localStorage.setItem(key, value)
+        // Oblicz maxAge na podstawie JWT exp
+        let maxAge = 60 * 15 // domyślnie 15 minut
+        const exp = getJwtExpiry(value)
+        if (exp) {
+          const now = Math.floor(Date.now() / 1000)
+          const calculatedMaxAge = exp - now
+          if (calculatedMaxAge > 0) {
+            maxAge = calculatedMaxAge
+          }
+        }
+        document.cookie = `${key}=${value}; Max-Age=${maxAge}; path=/;`
       }
     } catch (e) {
       console.error('Local storage is unavailable:', e)
@@ -37,16 +60,16 @@ export async function setStorageItemAsync(key: string, value: string | null) {
 }
 
 export function useStorageState(key: string): UseStateHook<string> {
-  // Public
   const [state, setState] = useAsyncState<string>()
 
-  // Get
   useEffect(() => {
     if (Platform.OS === 'web') {
       try {
-        if (typeof localStorage !== 'undefined') {
-          setState(localStorage.getItem(key))
-        }
+        const cookieValue = document.cookie
+          .split('; ')
+          .find(row => row.startsWith(`${key}=`))
+          ?.split('=')[1]
+        setState(cookieValue || null)
       } catch (e) {
         console.error('Local storage is unavailable:', e)
       }
@@ -57,7 +80,6 @@ export function useStorageState(key: string): UseStateHook<string> {
     }
   }, [key])
 
-  // Set
   const setValue = useCallback(
     (value: string | null) => {
       setState(value)
