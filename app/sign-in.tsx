@@ -1,17 +1,19 @@
-import { Image } from 'expo-image'
-import { Platform, StyleSheet, TextInput } from 'react-native'
-
+// /app/sign-in
 import ParallaxScrollView from '@/components/ParallaxScrollView'
 import { ThemedText } from '@/components/ThemedText'
 import { ThemedView } from '@/components/ThemedView'
+import { useSession } from '@/ctx'
+import { Image } from 'expo-image'
+import { router } from 'expo-router'
 import { useState } from 'react'
-import { Alert, Button } from 'react-native'
+import { Alert, Button, Platform, StyleSheet, TextInput } from 'react-native'
 
-export default function HomeScreen() {
+export default function SignIn() {
   const [loginEmail, setLoginEmail] = useState('')
   const [loginPassword, setLoginPassword] = useState('')
   const [registerEmail, setRegisterEmail] = useState('')
   const [registerPassword, setRegisterPassword] = useState('')
+  const { signIn } = useSession()
 
   const API_URL =
     Platform.OS === 'web' ? 'http://localhost:3000' : 'http://192.168.1.30:3000'
@@ -26,14 +28,19 @@ export default function HomeScreen() {
       })
 
       const data = await response.json()
+      const authHeader = response.headers.get('Authorization') // 'Bearer <token>'
+      const access_token = authHeader?.split(' ')[1]
 
       if (!response.ok) {
         Alert.alert('Login failed', data.message || 'Unknown error')
         return
       }
 
+      // Zapisz token i ustaw sesję w kontekście
+      await signIn(access_token!)
+
       Alert.alert('Success', 'Logged in!')
-      console.log('Access token:', data.access_token)
+      router.replace('/')
     } catch (error) {
       console.error(error)
       Alert.alert('Error', 'Something went wrong.')
@@ -75,7 +82,7 @@ export default function HomeScreen() {
         />
       }
     >
-      <ThemedText>Login</ThemedText>
+      <ThemedText>Sign In</ThemedText>
       <TextInput
         placeholder="enter email"
         autoComplete="email"
@@ -83,7 +90,9 @@ export default function HomeScreen() {
         placeholderTextColor="gray"
         onChangeText={setLoginEmail}
         value={loginEmail}
-      ></TextInput>
+        keyboardType="email-address"
+        autoCapitalize="none"
+      />
       <TextInput
         secureTextEntry={true}
         placeholder="enter password"
@@ -91,8 +100,8 @@ export default function HomeScreen() {
         placeholderTextColor="gray"
         onChangeText={setLoginPassword}
         value={loginPassword}
-      ></TextInput>
-      <Button title="Login" onPress={handleLogin} />
+      />
+      <Button title="Sign In" onPress={handleLogin} />
 
       <ThemedView
         style={{
@@ -136,6 +145,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'dimgray',
     paddingLeft: 10,
+    marginBottom: 12,
   },
   reactLogo: {
     height: 178,
