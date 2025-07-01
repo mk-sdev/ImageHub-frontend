@@ -13,7 +13,7 @@ import {
   Text as ThemedText,
   View as ThemedView,
 } from 'react-native'
-import { useSession } from './ctx'
+import { useSession } from '../ctx'
 import { View } from '@/components/Themed'
 
 export default function Login() {

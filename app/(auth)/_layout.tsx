@@ -1,10 +1,10 @@
 import { Redirect, Stack } from 'expo-router'
 
-import { useSession } from '../ctx'
+import { useSession } from '../../ctx'
 import { Text } from '@/components/Themed'
 
 export default function AppLayout() {
-  const { access_token, isLoading } = useSession()
+  const { access_token,refresh_token, isLoading } = useSession()
   // You can keep the splash screen open, or render a loading screen like we do here.
   if (isLoading) {
     return <Text>Loading...</Text>
@@ -12,7 +12,7 @@ export default function AppLayout() {
 
   // Only require authentication within the (app) group's layout as users
   // need to be able to access the (auth) group and sign in again.
-  if (!access_token) {
+  if (!access_token && !refresh_token) {
     return <Redirect href="/login" />
   }
 

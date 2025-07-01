@@ -1,38 +1,101 @@
-import { Button, StyleSheet } from 'react-native'
-
-import EditScreenInfo from '@/components/EditScreenInfo'
 import { Text, View } from '@/components/Themed'
-import { useSession } from '../../ctx'
-import { useEffect, useState } from 'react'
 import axios from 'axios'
+import { useEffect, useState } from 'react'
+import { Button, StyleSheet } from 'react-native'
+import { useSession } from '../../../ctx'
 
 export default function TabOneScreen() {
-  const { signOut, access_token} = useSession()
+  const {
+    signOut,
+    access_token,
+    refresh_token,
+    setAccessToken,
+    setRefreshToken,
+  } = useSession()
+
   const [userInfo, setUserInfo] = useState<unknown>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (!access_token) return
+  async function refreshTokens() {
+    try {
+      const response = await axios.post('http://localhost:3000/refresh', {
+        // access_token,
+        refresh_token,
+      })
 
-    setLoading(true)
-    axios
-      .get('http://localhost:3000/userinfo', {
+      const { access_token: newAccessToken, refresh_token: newRefreshToken } =
+        response.data
+
+      if (!newAccessToken || !newRefreshToken) {
+        throw new Error('Brak tokenów w odpowiedzi')
+      }
+
+      setAccessToken(newAccessToken)
+      setRefreshToken(newRefreshToken)
+
+      return true
+    } catch (err) {
+      console.error('Refresh token error:', err)
+      signOut()
+      return false
+    }
+  }
+
+  async function fetchUserInfo() {
+    setLoading(true) // ustawiamy loading na true na początku
+    try {
+      const response = await axios.get('http://localhost:3000/userinfo', {
         headers: {
           Authorization: `Bearer ${access_token}`,
           'Content-Type': 'application/json',
         },
       })
-      .then(response => {
-        setUserInfo(response.data)
-        setError(null)
-      })
-      .catch(err => {
+
+      setUserInfo(response.data)
+      setError(null)
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        // access_token wygasł, próbujemy odświeżyć
+        const refreshed = await refreshTokens()
+        if (refreshed) {
+          try {
+            // ponawiamy zapytanie z nowym tokenem
+            const retryResponse = await axios.get(
+              'http://localhost:3000/userinfo',
+              {
+                headers: {
+                  Authorization: `Bearer ${access_token}`,
+                  'Content-Type': 'application/json',
+                },
+              }
+            )
+            setUserInfo(retryResponse.data)
+            setError(null)
+          } catch (retryErr: any) {
+            setError(retryErr.response?.data?.message || retryErr.message)
+            setUserInfo(null)
+          }
+        } else {
+          setError('Sesja wygasła, zaloguj się ponownie')
+          setUserInfo(null)
+        }
+      } else {
+        // inne błędy niż 401
         setError(err.response?.data?.message || err.message)
         setUserInfo(null)
-      })
-      .finally(() => setLoading(false))
-  }, [access_token])
+      }
+    } finally {
+      setLoading(false) // wyłączamy loading dopiero po całej obsłudze błędu i odświeżeniu
+    }
+  }
+  
+  
+
+  useEffect(() => {
+    // setLoading(true)
+    fetchUserInfo()
+  }, [])
 
   return (
     <View style={styles.container}>
@@ -41,7 +104,9 @@ export default function TabOneScreen() {
       {error && <Text style={{ color: 'red' }}>Error: {error}</Text>}
       {userInfo ? (
         <>
-          <Text>Welcome, {userInfo.name || userInfo.email || access_token}</Text>
+          <Text>
+            Welcome, {userInfo.name || userInfo.email || access_token}
+          </Text>
           <Text>Email: {userInfo.email}</Text>
           <Text numberOfLines={5}>JWT: {userInfo.tokenReceived}</Text>
         </>
@@ -53,7 +118,6 @@ export default function TabOneScreen() {
         lightColor="#eee"
         darkColor="rgba(255,255,255,0.1)"
       />
-      <EditScreenInfo path="app/(auth)/(tabs)/index.tsx" />
       <Button title="Sign Out" onPress={() => signOut()} />
     </View>
   )
