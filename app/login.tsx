@@ -38,6 +38,7 @@ export default function Login() {
       const data = await response.json()
       const authHeader = response.headers.get('Authorization') // 'Bearer <token>'
       const access_token = authHeader?.split(' ')[1]
+      const refresh_token = data.refresh_token
 
       if (!response.ok) {
         Alert.alert('Login failed', data.message || 'Unknown error')
@@ -45,7 +46,7 @@ export default function Login() {
       }
 
       // Zapisz token i ustaw sesję w kontekście
-      await signIn(access_token!)
+      await signIn(access_token!, refresh_token!)
 
       Alert.alert('Success', 'Logged in!')
       router.replace('/')
@@ -182,4 +183,3 @@ const styles = StyleSheet.create({
     fontSize: 18,
   },
 })
-

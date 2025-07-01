@@ -2,7 +2,7 @@ import React from 'react'
 import { useStorageState } from './useStorageState'
 
 const AuthContext = React.createContext<{
-  signIn: (access_token: string) => void
+  signIn: (access_token: string, refresh_token: string) => void
   signOut: () => void
   access_token?: string | null
   isLoading: boolean
@@ -26,18 +26,22 @@ export function useSession() {
 }
 
 export function SessionProvider(props: React.PropsWithChildren) {
-  const [[isLoading, session], setSession] = useStorageState('access_token')
+  const [[isLoading, session], setAccessSession] =
+    useStorageState('access_token')
+  const [[], setRefreshSession] = useStorageState('refresh_token')
   return (
     <AuthContext.Provider
       value={{
-        signIn: access_token => {
+        signIn: (access_token, refresh_token) => {
           // Add your login logic here
           // For example purposes, we'll just set a fake session in storage
           //This likely would be a JWT token or other session data
-          setSession(access_token)
+          setAccessSession(access_token)
+          setRefreshSession(refresh_token)
         },
         signOut: () => {
-          setSession(null)
+          setAccessSession(null)
+          setRefreshSession(null)
         },
         access_token: session,
         isLoading,

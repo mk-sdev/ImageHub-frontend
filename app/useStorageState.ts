@@ -48,7 +48,7 @@ export async function setStorageItemAsync(key: string, value: string | null) {
         document.cookie = `${key}=${value}; Max-Age=${maxAge}; path=/;`
       }
     } catch (e) {
-      console.error('Local storage is unavailable:', e)
+      console.error('Cookie storage is unavailable:', e)
     }
   } else {
     if (value == null) {
@@ -71,7 +71,7 @@ export function useStorageState(key: string): UseStateHook<string> {
           ?.split('=')[1]
         setState(cookieValue || null)
       } catch (e) {
-        console.error('Local storage is unavailable:', e)
+        console.error('Cookie storage is unavailable:', e)
       }
     } else {
       SecureStore.getItemAsync(key).then(value => {
