@@ -1,20 +1,20 @@
 // /app/login
 // import { Text as ThemedText } from '@/components/ThemedText'
 // import { ThemedView } from '@/components/ThemedView'
+import { View } from '@/components/Themed'
+import { API_URL } from '@/constants/url'
 import { router } from 'expo-router'
 import React, { useState } from 'react'
 import {
   Alert,
   Button,
-  Platform,
   ScrollView,
   StyleSheet,
   TextInput,
   Text as ThemedText,
-  View as ThemedView,
+  View as ThemedView
 } from 'react-native'
 import { useSession } from '../ctx'
-import { View } from '@/components/Themed'
 
 export default function Login() {
   const [loginEmail, setLoginEmail] = useState('')
@@ -22,9 +22,6 @@ export default function Login() {
   const [registerEmail, setRegisterEmail] = useState('')
   const [registerPassword, setRegisterPassword] = useState('')
   const { signIn } = useSession()
-
-  const API_URL =
-    Platform.OS === 'web' ? 'http://localhost:3000' : 'http://192.168.1.30:3000'
 
   const handleLogin = async () => {
     try {
