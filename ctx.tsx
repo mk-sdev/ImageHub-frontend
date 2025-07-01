@@ -1,5 +1,7 @@
 import React from 'react'
 import { useStorageState } from './hooks/useStorageState'
+import axios from 'axios'
+import { API_URL } from './constants/url'
 
 const AuthContext = React.createContext<{
   signIn: (access_token: string, refresh_token: string) => void
@@ -43,9 +45,19 @@ export function SessionProvider(props: React.PropsWithChildren) {
           setAccessToken(newAccessToken)
           setRefreshToken(newRefreshToken)
         },
-        signOut: () => {
-          setAccessToken(null)
-          setRefreshToken(null)
+        signOut: async () => {
+          try {
+            if (refresh_token) {
+              await axios.post(`${API_URL}/logout`, {
+                refresh_token,
+              })
+            }
+          } catch (err) {
+            console.warn('Błąd przy wylogowywaniu:', err)
+          } finally {
+            setAccessToken(null)
+            setRefreshToken(null)
+          }
         },
         setAccessToken,
         setRefreshToken,
