@@ -4,7 +4,7 @@
 import { View } from '@/components/Themed'
 import { API_URL } from '@/constants/url'
 import { router } from 'expo-router'
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import {
   Alert,
   Button,
@@ -12,7 +12,7 @@ import {
   StyleSheet,
   TextInput,
   Text as ThemedText,
-  View as ThemedView
+  View as ThemedView,
 } from 'react-native'
 import { useSession } from '../ctx'
 
@@ -21,12 +21,19 @@ export default function Login() {
   const [loginPassword, setLoginPassword] = useState('')
   const [registerEmail, setRegisterEmail] = useState('')
   const [registerPassword, setRegisterPassword] = useState('')
-  const { signIn } = useSession()
+  const { signIn, access_token, refresh_token } = useSession()
+
+  useEffect(() => {
+    console.log("🚀 ~ useEffect ~ access_token:", access_token)
+    if (access_token || refresh_token) {
+      router.replace('/') 
+    }
+  }, [access_token, refresh_token])
 
   const handleLogin = async () => {
     try {
       const response = await fetch(`${API_URL}/login`, {
-        method: 'POST',
+        method: 'PATCH',
         credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: loginEmail, password: loginPassword }),
