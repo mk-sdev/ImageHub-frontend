@@ -17,7 +17,7 @@ export function useFetchWithRefresh() {
 
   async function refreshTokens() {
     try {
-      const response = await axios.post(API_URL + '/refresh', {
+      const response = await axios.patch(API_URL + '/refresh', {
         refresh_token,
       })
 

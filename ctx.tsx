@@ -48,7 +48,7 @@ export function SessionProvider(props: React.PropsWithChildren) {
         signOut: async () => {
           try {
             if (refresh_token) {
-              await axios.post(`${API_URL}/logout`, {
+              await axios.patch(`${API_URL}/logout`, {
                 refresh_token,
               })
             }
